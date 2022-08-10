@@ -1,0 +1,142 @@
+﻿@model searchcomic.MarvelApi.CharacterComicViewModel
+@{ ViewData["Title"] = "Busca";
+}
+
+<script src="https://maps.google.com/maps/api/js?key=AIzaSyClXZifev2VfiW_tdmoZPbMJwxvNiFVQiQ"></script>
+
+<script>
+var x = document.getElementById("container");
+function getLocation() {
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(showPosition, showError);
+  } else { 
+        x.innerHTML = "A geolocalização não é compatível com este navegador.";
+  }
+}
+
+function showPosition(position) {
+  var lat = position.coords.latitude;
+  var lon = position.coords.longitude;
+  var latlon = new google.maps.LatLng(lat, lon)
+  var mapholder = document.getElementById('mapholder')
+  mapholder.style.height = '250px';
+  mapholder.style.width = '350px';
+
+  var myOptions = {
+    center:latlon,zoom:14,
+    mapTypeId:google.maps.MapTypeId.ROADMAP,
+    mapTypeControl:false,
+    navigationControlOptions:{style:google.maps.NavigationControlStyle.SMALL}
+  }
+    
+  var map = new google.maps.Map(document.getElementById("mapholder"), myOptions);
+  var marker = new google.maps.Marker({position:latlon,map:map,title:"You are here!"});
+}
+
+function showError(error) {
+  switch(error.code) {
+    case error.PERMISSION_DENIED:
+      x.innerHTML = "O usuário negou a solicitação de geolocalização.."
+      break;
+    case error.POSITION_UNAVAILABLE:
+      x.innerHTML = "As informações de localização não estão disponíveis."
+      break;
+    case error.TIMEOUT:
+      x.innerHTML = "A solicitação para obter a localização do usuário expirou."
+      break;
+    case error.UNKNOWN_ERROR:
+      x.innerHTML = "Ocorreu um erro desconhecido."
+      break;
+  }
+}
+</script>
+
+<style>
+    #container {
+        height: 100%;
+        position: absolute;
+        visibility: hidden;
+        display: none;
+        background-color: rgba(22,22,22,0.5);
+    }
+
+    #container:target {
+        visibility: visible;
+        display: block;
+    }
+
+    .reveal-modal {
+        background: #e1e1e1;
+        position: relative;
+        z-index: 40;
+        top: 25%;
+        padding: 30px;
+        -webkit-box-shadow: 0 0 10px rgba(0,0,0,0.4);
+        -moz-box-shadow: 0 0 10px rgba(0,0,0,0.4);
+        box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+</style>
+
+@Html.ValidationSummary(false, "", new { @style = "color: red" })
+
+@if (ViewBag.Hero == null)
+{
+
+}
+else
+{
+    <div class="row  py-3">
+        <div class="col-md-4">
+            <img class="img-responsive rounded mb-lg-0 box box0 " src="@(String.Format("{0}.{1}", Model.Character.Thumbnail.Path, Model.Character.Thumbnail.Extension))" style="width:100%" alt="">
+        </div>
+
+        <div class="col-md-8">
+            <div class="card box box0 h-100 mt-2 mt-lg-0 ">
+                <div class="card-title ml-3 mt-3">
+                    <h1 class="ComicTitle ">@Model.Character.Name</h1>
+                </div>
+                <div class="card-body">
+                    <p>@Model.Character.Description</p>
+                </div>
+                <div class="card-footer">
+                    <a href="@Model.Character.Urls.FirstOrDefault(x=>x.Type=="detail").Url" class="comicbutton comicbutton-accent" target="_blank">Saiba Mais!</a>
+                    <p class="atributiontext">@Model.AttributionText</p>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row py-3">
+        <div id="container">
+            <div id="Modal" class="reveal-modal">
+                <p>
+                    <div id="mapholder"></div>
+                </p>
+                <a href="#" class="close-reveal-modal">Confirmar</a>
+            </div>
+        </div>
+
+        @foreach (var comic in Model.Comics)
+        {
+            <div class="col-md-4 mb-0 flip-container">
+                <div class="flipper" style="min-height:450px;">
+                    <div class="front">
+                        <img class="box" src="@(String.Format("{0}/portrait_uncanny.{1}", comic.Thumbnail.Path, comic.Thumbnail.Extension))" alt="">
+                    </div>
+                    <div class="card h-100 back box ">
+                        <div class="card-body">
+                            <h5 class="card-title">@comic.Series.Name #@comic.IssueNumber</h5>
+                            <p class="card-text">@comic.Description</p>
+                        </div>
+                        <div class="card-footer float-right">
+                            <a href="#container" class="comicbutton comicbutton-accent" data-reveal-id="Modal" onclick="getLocation()">Enviar HQ para</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
